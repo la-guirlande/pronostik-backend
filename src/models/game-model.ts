@@ -1,4 +1,5 @@
 import { Document, Model, Mongoose, Schema } from 'mongoose';
+const mongooseToJson = require('@meanie/mongoose-to-json');
 import ServiceContainer from '../services/service-container';
 import Attributes from './model';
 import { UserInstance } from './user-model';
@@ -17,10 +18,12 @@ export interface GameAttributes extends Attributes {
  * Game track.
  */
 export interface GameTrack {
+  _id?: string;
+  id?: string;
   name: string;
   artists: string[];
-  scores: GameTrackScore[];
-  played: boolean;
+  scores?: GameTrackScore[];
+  played?: boolean;
 }
 
 /**
@@ -32,9 +35,28 @@ export interface GameTrackScore {
 }
 
 /**
- * Game instance.
+ * Game scoreboard.
  */
-export interface GameInstance extends GameAttributes, Document {}
+export interface GameScoreboard {
+  gameId: string;
+  board: {
+    player: UserInstance;
+    score: number;
+    position?: number;
+  }[];
+}
+
+/**
+ * Game document.
+ */
+export interface GameDocument extends GameAttributes, Document {
+  getScoreboard(): GameScoreboard;
+}
+
+/**
+ * Game model.
+ */
+export interface GameModel extends Model<GameDocument> {}
 
 /**
  * Creates the game model.
@@ -42,8 +64,8 @@ export interface GameInstance extends GameAttributes, Document {}
  * @param container Services container
  * @param mongoose Mongoose instance
  */
-export default function createModel(container: ServiceContainer, mongoose: Mongoose): Model<GameInstance> {
-  return mongoose.model('Game', createGameSchema(), 'games');
+export default function createModel(container: ServiceContainer, mongoose: Mongoose): GameModel {
+  return mongoose.model<GameDocument, GameModel>('Game', createGameSchema(), 'games');
 }
 
 /**
@@ -53,7 +75,7 @@ export default function createModel(container: ServiceContainer, mongoose: Mongo
  * @returns Game schema
  */
 function createGameSchema() {
-  const schema = new Schema({
+  const schema = new Schema<GameDocument, GameModel>({
     name: {
       type: Schema.Types.String,
       default: null
@@ -83,6 +105,35 @@ function createGameSchema() {
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
   });
+
+  schema.method('getScoreboard', function(this: GameDocument) {
+    const scoreboard: GameScoreboard = {
+      gameId: this.id,
+      board: []
+    };
+
+    this.players.forEach(player => {
+      let score = 0;
+      this.tracks.forEach(track => {
+        track.scores.filter(trackScore => trackScore.player.toString() === player.toString()).forEach(trackScore => {
+          if (track.played) {
+            score += trackScore.score;
+          } else {
+            score -= trackScore.score;
+          }
+        });
+      })
+      scoreboard.board.push({ player, score });
+    });
+
+    scoreboard.board.sort((a, b) => b.score - a.score);
+    scoreboard.board.forEach((board, i) => board.position = i + 1);
+
+    return scoreboard;
+  });
+
+  schema.plugin(mongooseToJson);
+
   return schema;
 }
 
@@ -111,10 +162,7 @@ function createGameTrackSchema() {
       type: [{
         type: createGameTrackScoreSchema()
       }],
-      validate: {
-        validator: (scores: GameTrackScore[]) => scores != null && scores.length >= 10,
-        message: 'Game track scores must be >= 10'
-      }
+      default: []
     },
     played: {
       type: Schema.Types.Boolean,
@@ -123,6 +171,9 @@ function createGameTrackSchema() {
   }, {
     timestamps: false
   });
+
+  schema.plugin(mongooseToJson);
+
   return schema;
 }
 
@@ -146,6 +197,8 @@ function createGameTrackScoreSchema() {
       max: [10, 'Game track score must be between 0 and 10']
     }
   }, {
+    _id: false,
+    id: false,
     timestamps: false
   });
   return schema;
