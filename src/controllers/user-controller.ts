@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Error as MongooseError } from 'mongoose';
 import { UserInstance } from '../models/user-model';
 import ServiceContainer from '../services/service-container';
 import Controller, { Link } from './controller';
@@ -120,7 +121,7 @@ export default class UserController extends Controller {
       });
     } catch (err) {
       this.logger.error(err);
-      if (err.name === 'ValidationError') {
+      if (err instanceof MongooseError.ValidationError) {
         return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
       }
       return res.status(500).send(this.container.errors.formatServerError());
@@ -160,7 +161,7 @@ export default class UserController extends Controller {
       });
     } catch (err) {
       this.logger.error(err);
-      if (err.name === 'ValidationError') {
+      if (err instanceof MongooseError.ValidationError) {
         return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
       }
       return res.status(500).send(this.container.errors.formatServerError());
@@ -206,7 +207,7 @@ export default class UserController extends Controller {
       });
     } catch (err) {
       this.logger.error(err);
-      if (err.name === 'ValidationError') {
+      if (err instanceof MongooseError.ValidationError) {
         return res.status(400).send(this.container.errors.formatErrors(...this.container.errors.translateMongooseValidationError(err)));
       }
       return res.status(500).send(this.container.errors.formatServerError());
