@@ -38,7 +38,7 @@ export default class GameController extends Controller {
    */
   public async listHandler(req: Request, res: Response): Promise<Response> {
     try {
-      return res.status(200).send({ games: await this.db.games.find() });
+      return res.status(200).send({ games: await this.db.games.find().populate('players').populate('tracks.scores.player') });
     } catch (err) {
       console.error(err);
       return res.status(500).send(this.container.errors.formatServerError());
@@ -56,7 +56,7 @@ export default class GameController extends Controller {
    */
   public async getHandler(req: Request, res: Response): Promise<Response> {
     try {
-      const game = await this.db.games.findById(req.params.gameId);
+      const game = await this.db.games.findById(req.params.gameId).populate('players').populate('tracks.scores.player');
       if (game == null) {
         return res.status(404).send(this.container.errors.formatErrors({
           error: 'not_found',
