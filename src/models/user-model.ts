@@ -1,7 +1,7 @@
 import { Document, Model, Mongoose, Schema } from 'mongoose';
-const mongooseToJson = require('@meanie/mongoose-to-json');
 import ServiceContainer from '../services/service-container';
 import Attributes from './model';
+const mongooseToJson = require('@meanie/mongoose-to-json');
 
 /**
  * User attributes.

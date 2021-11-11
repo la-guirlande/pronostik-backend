@@ -25,6 +25,7 @@ export default class UserController extends Controller {
     this.registerEndpoint({ method: 'PUT', uri: '/:id', handlers: this.modifyHandler });
     this.registerEndpoint({ method: 'PATCH', uri: '/:id', handlers: this.updateHandler });
     this.registerEndpoint({ method: 'DELETE', uri: '/:id', handlers: this.deleteHandler });
+    this.registerEndpoint({ method: 'GET', uri: '/:id/games', handlers: this.getGamesHandler });
   }
 
   /**
@@ -233,6 +234,32 @@ export default class UserController extends Controller {
         }));
       }
       return res.status(204).send();
+    } catch (err) {
+      this.logger.error(err);
+      return res.status(500).send(this.container.errors.formatServerError());
+    }
+  }
+
+  /**
+   * Gets user games.
+   * 
+   * Path : `GET /users/:id/games`
+   * 
+   * @param req Express request
+   * @param res Express response
+   * @async
+   */
+   public async getGamesHandler(req: Request, res: Response): Promise<Response> {
+    try {
+      const user = await this.db.users.findById(req.params.id);
+      if (user == null) {
+        return res.status(404).send(this.container.errors.formatErrors({
+          error: 'not_found',
+          error_description: 'User not found'
+        }));
+      }
+      const games = await this.db.games.find({ players: user.id }).populate('players').populate('tracks.scores.player');
+      return res.status(200).send({ games });
     } catch (err) {
       this.logger.error(err);
       return res.status(500).send(this.container.errors.formatServerError());
