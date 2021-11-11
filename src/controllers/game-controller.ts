@@ -18,6 +18,7 @@ export default class GameController extends Controller {
   public constructor(container: ServiceContainer) {
     super(container, '/games');
     this.registerEndpoint({ method: 'GET', uri: '/', handlers: this.listHandler });
+    this.registerEndpoint({ method: 'GET', uri: '/:gameId', handlers: this.getHandler });
     this.registerEndpoint({ method: 'GET', uri: '/:gameId/scoreboard', handlers: this.scoreboardHandler });
     this.registerEndpoint({ method: 'POST', uri: '/', handlers: [container.auth.authenticateHandler, container.auth.isAuthenticatedHandler, this.createHandler] });
     this.registerEndpoint({ method: 'PUT', uri: '/:gameId/join', handlers: [container.auth.authenticateHandler, container.auth.isAuthenticatedHandler, this.joinHandler] });
@@ -38,6 +39,31 @@ export default class GameController extends Controller {
   public async listHandler(req: Request, res: Response): Promise<Response> {
     try {
       return res.status(200).send({ games: await this.db.games.find() });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).send(this.container.errors.formatServerError());
+    }
+  }
+
+  /**
+   * Gets a game.
+   * 
+   * Path : `GET /games/:gameId`
+   * 
+   * @param req Express request
+   * @param res Express response
+   * @async
+   */
+  public async getHandler(req: Request, res: Response): Promise<Response> {
+    try {
+      const game = await this.db.games.findById(req.params.gameId);
+      if (game == null) {
+        return res.status(404).send(this.container.errors.formatErrors({
+          error: 'not_found',
+          error_description: 'Game not found'
+        }));
+      }
+      return res.status(200).send({ game });
     } catch (err) {
       console.error(err);
       return res.status(500).send(this.container.errors.formatServerError());
