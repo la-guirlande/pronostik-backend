@@ -105,10 +105,10 @@ export default class GameController extends Controller {
    * @async
    */
   public async createHandler(req: Request, res: Response): Promise<Response> {
-    const { name, description } = req.body;
+    const { name, description, image } = req.body;
     try {
       const game = await this.db.games.create({
-        name, description, players: [res.locals.authUser]
+        name, description, image, players: [res.locals.authUser]
       });
       return res.status(201).send({ id: game.id });
     } catch (err) {
