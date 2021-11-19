@@ -88,7 +88,7 @@ export default class GameController extends Controller {
           error_description: 'Game not found'
         }));
       }
-      return res.status(200).send({ scoreboard: game.getScoreboard() });
+      return res.status(200).send({ scoreboard: await game.getScoreboard() });
     } catch (err) {
       console.error(err);
       return res.status(500).send(this.container.errors.formatServerError());

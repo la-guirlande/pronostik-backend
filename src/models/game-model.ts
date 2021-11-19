@@ -52,7 +52,7 @@ export interface GameScoreboard {
  * Game document.
  */
 export interface GameDocument extends GameAttributes, Document {
-  getScoreboard(): GameScoreboard;
+  getScoreboard(): Promise<GameScoreboard>;
 }
 
 /**
@@ -118,7 +118,8 @@ function createGameSchema() {
     toObject: { virtuals: true }
   });
 
-  schema.method('getScoreboard', function(this: GameDocument) {
+  schema.method('getScoreboard', async function(this: GameDocument) {
+    await this.populate('players').execPopulate();
     const scoreboard: GameScoreboard = {
       gameId: this.id,
       board: []
