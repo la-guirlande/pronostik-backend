@@ -9,8 +9,9 @@ import { UserInstance } from './user-model';
  * Game attributes.
  */
 export interface GameAttributes extends Attributes {
-  name?: string;
+  name: string;
   description?: string;
+  image: string;
   players: UserInstance[];
   tracks: GameTrack[];
 }
@@ -79,11 +80,15 @@ function createGameSchema() {
   const schema = new Schema<GameDocument, GameModel>({
     name: {
       type: Schema.Types.String,
-      default: null
+      required: [true, 'Game name is required']
     },
     description: {
       type: Schema.Types.String,
       default: null
+    },
+    image: {
+      type: Schema.Types.String,
+      required: [true, 'Game image is required']
     },
     players: {
       type: [{
