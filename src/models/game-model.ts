@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { Document, Model, Mongoose, Schema } from 'mongoose';
 const mongooseToJson = require('@meanie/mongoose-to-json');
 import ServiceContainer from '../services/service-container';
@@ -89,10 +90,16 @@ function createGameSchema() {
         type: Schema.Types.ObjectId,
         ref: 'User'
       }],
-      validate: {
+      validate: [{
         validator: (players: UserInstance[]) => players != null && players.length >= 1,
         message: 'Game players are required'
-      }
+      }, {
+        validator: (players: UserInstance[]) => {
+          const rawPlayers = players.map(player => player.toString());
+          return _.uniq(rawPlayers).length === rawPlayers.length;
+        },
+        message: 'Player has already joined this game'
+      }]
     },
     tracks: {
       type: [{
@@ -162,7 +169,14 @@ function createGameTrackSchema() {
       type: [{
         type: createGameTrackScoreSchema()
       }],
-      default: []
+      default: [],
+      validate: {
+        validator: (scores: GameTrackScore[]) => {
+          const rawPlayers = scores.map(score => score.player.toString());
+          return _.uniq(rawPlayers).length === rawPlayers.length;
+        },
+        message: 'Game track score is already registered for this player'
+      }
     },
     played: {
       type: Schema.Types.Boolean,
