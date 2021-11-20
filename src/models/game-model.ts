@@ -128,7 +128,7 @@ function createGameSchema() {
     this.players.forEach(player => {
       let score = 0;
       this.tracks.forEach(track => {
-        track.scores.filter(trackScore => trackScore.player.id === player.id).forEach(trackScore => {
+        track.scores.filter(trackScore => trackScore.player.toString() === player.id).forEach(trackScore => {
           if (track.played) {
             score += trackScore.score;
           } else {
